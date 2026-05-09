@@ -26,6 +26,8 @@ class SettingsUpdate(BaseModel):
     siliconflow_key: Optional[str] = None
     gemini_free_key: Optional[str] = None
     aipro_key: Optional[str] = None
+    deepseek_key: Optional[str] = None
+    deepseek_flash_key: Optional[str] = None
     netease_music_u: Optional[str] = None
 
 @router.get("/api/settings")
@@ -39,11 +41,15 @@ async def get_settings():
         "siliconflow_key": SETTINGS.get("siliconflow_key", ""),
         "gemini_free_key": SETTINGS.get("gemini_free_key", ""),
         "aipro_key": SETTINGS.get("aipro_key", ""),
+        "deepseek_key": SETTINGS.get("deepseek_key", ""),
+        "deepseek_flash_key": SETTINGS.get("deepseek_flash_key", ""),
         "netease_music_u": SETTINGS.get("netease_music_u", ""),
         "gemini_key_masked": mask(SETTINGS.get("gemini_key", "")),
         "siliconflow_key_masked": mask(SETTINGS.get("siliconflow_key", "")),
         "gemini_free_key_masked": mask(SETTINGS.get("gemini_free_key", "")),
         "aipro_key_masked": mask(SETTINGS.get("aipro_key", "")),
+        "deepseek_key_masked": mask(SETTINGS.get("deepseek_key", "")),
+        "deepseek_flash_key_masked": mask(SETTINGS.get("deepseek_flash_key", "")),
         "netease_music_u_masked": mask(SETTINGS.get("netease_music_u", "")),
     }
 
@@ -57,6 +63,10 @@ async def update_settings(body: SettingsUpdate):
         SETTINGS["gemini_free_key"] = body.gemini_free_key
     if body.aipro_key is not None:
         SETTINGS["aipro_key"] = body.aipro_key
+    if body.deepseek_key is not None:
+        SETTINGS["deepseek_key"] = body.deepseek_key
+    if body.deepseek_flash_key is not None:
+        SETTINGS["deepseek_flash_key"] = body.deepseek_flash_key
     if body.netease_music_u is not None:
         old_mu = SETTINGS.get("netease_music_u", "")
         SETTINGS["netease_music_u"] = body.netease_music_u

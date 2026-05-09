@@ -12,9 +12,8 @@ from database import get_db
 from ws import manager
 
 # ── 向量工具 ──────────────────────────────────────
-EMBEDDING_MODEL = "gemini-embedding-001"
-EMBEDDING_DIMS = 3072
-
+EMBEDDING_MODEL = "BAAI/bge-large-zh-v1.5"
+EMBEDDING_DIMS = 1024
 
 def _pack_embedding(values: list[float]) -> bytes:
     return struct.pack(f'{len(values)}f', *values)
@@ -35,16 +34,18 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 async def get_embedding(text: str) -> list[float] | None:
-    gemini_key = get_key("gemini_free")
-    if not gemini_key:
+    key = get_key("siliconflow")
+    if not key:
         return None
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{EMBEDDING_MODEL}:embedContent?key={gemini_key}"
-    body = {"content": {"parts": [{"text": text}]}}
+    url = "https://api.siliconflow.cn/v1/embeddings"
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    body = {"model": EMBEDDING_MODEL, "input": text}
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(url, json=body)
+            resp = await client.post(url, json=body, headers=headers)
             resp.raise_for_status()
-            return resp.json()["embedding"]["values"]
+            data = resp.json()
+            return data["data"][0]["embedding"]
     except Exception:
         return None
 
@@ -247,8 +248,8 @@ async def instant_digest(recent_messages: list[dict]) -> dict:
     用户每次发消息后即时调用 flash-lite，返回结构化 JSON：
     {is_search_needed, keywords, require_detail, status}
     """
-    gemini_key = get_key("gemini_free")
-    if not gemini_key or not recent_messages:
+    flash_key = get_key("deepseek_flash")
+    if not flash_key or not recent_messages:
         return {"is_search_needed": False, "keywords": [], "require_detail": False, "status": "", "topic": ""}
 
     wb = load_worldbook()
@@ -279,22 +280,20 @@ async def instant_digest(recent_messages: list[dict]) -> dict:
         f"对话：\n{messages_text}"
     )
 
-    model = "gemini-3.1-flash-lite-preview"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
-    contents = [{"role": "user", "parts": [{"text": prompt}]}]
-    safety_settings = [
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-    ]
+    url = "https://api.deepseek.com/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {flash_key}", "Content-Type": "application/json"}
+    payload = {
+        "model": "deepseek-v4-flash",
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": False,
+    }
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(url, json={"contents": contents, "safetySettings": safety_settings})
+            resp = await client.post(url, json=payload, headers=headers)
             resp.raise_for_status()
             data = resp.json()
-            raw = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+            raw = data["choices"][0]["message"]["content"].strip()
 
         # 提取 JSON（可能包裹在 ```json ... ``` 中）
         if "```" in raw:
@@ -499,14 +498,14 @@ async def _do_digest(min_messages: int = 0) -> dict:
             f"多个话题可以用多个短句来概括，例如：今天下午{user_name}玩了拼豆并展示给我看。今天莱利做了绝育手术。"
             f"语言简练，**严禁废话**。总体控制在100字以内。\n\n"
             f"2. \"keywords\": 提取 2-6 个用于检索的核心关键词。\n"
-            f"   - 【严禁】包含高频人名（如 Aion, Ithil, Riley, Maru等）。\n"
+            f"   - 【严禁】包含对话高频词（如 vv, Rec, 猴子, 老公, 叽叽咕咕等）。\n"
             f"   - 【严禁】包含泛指词或无意义虚词（如 AI, 聊天, 回复, 说话, 好的, 知道）。\n"
             f"   - 将对话中提及的**稀缺**专有名词罗列出来。\n"
             f"   - 包括：书名、电影名、具体的菜名、地名、特定的技术术语等。\n\n"
             f"3. \"importance\": (0.0 - 1.0) 评分。\n"
             f"   【评分严厉度：极高】请像一个苛刻的历史学家一样评分。默认分数为 0.3。\n"
             f"   - 1.0 (极罕见): 仅限【永久性】的核心事实（如：改名、确诊绝症、结婚、亲人离世）。\n"
-            f"   - 0.8 (少见): 强烈的个人偏好或长期习惯（如：绝对不吃香菜、坚持每天晨跑、核心价值观改变）。\n"
+            f"   - 0.8 (少见): 强烈的个人偏好或长期习惯（如：很喜欢吃香菜、总是熬夜、核心价值观改变）。\n"
             f"   - 0.5 (普通): 当天发生的具体事件（如：看了一部电影、去了一家餐厅、讨论了一个新闻）。大部分有内容的对话应在此档。\n"
             f"   - 0.1 - 0.3 (默认分数): 闲聊、情绪发泄、日常问候、没有信息增量的互动。\n"
             f"   【注意】：不要因为情绪激动就给高分，除非这揭示了新的性格特质。\n\n"

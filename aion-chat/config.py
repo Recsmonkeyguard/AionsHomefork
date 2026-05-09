@@ -34,7 +34,7 @@ def load_settings():
     if SETTINGS_PATH.exists():
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
-    keys = {"gemini_key": "", "siliconflow_key": "", "gemini_free_key": "", "aipro_key": ""}
+    keys = {"gemini_key": "", "siliconflow_key": "", "gemini_free_key": "", "aipro_key": "", "deepseek_key": "", "deepseek_flash_key": ""}
     txt = BASE_DIR.parent / "所需要的API.txt"
     if txt.exists():
         with open(txt, "r", encoding="utf-8") as f:
@@ -59,6 +59,10 @@ def get_key(provider: str) -> str:
         return SETTINGS.get("gemini_free_key", "") or SETTINGS.get("gemini_key", "")
     if provider == "aipro":
         return SETTINGS.get("aipro_key", "")
+    if provider == "deepseek":
+        return SETTINGS.get("deepseek_key", "")
+    if provider == "deepseek_flash":
+        return SETTINGS.get("deepseek_flash_key", "")
     return SETTINGS.get("siliconflow_key", "")
 
 # ── Worldbook ────────────────────────────────────
@@ -127,7 +131,9 @@ MODELS = {
     "哈基米opus4.6":  {"provider": "aipro", "model": "claude-opus-4-6"},
     "哈基米gpt-5.5":    {"provider": "aipro", "model": "gemini-3.1-pro-high"},
     "哈基米3.1pro":     {"provider": "aipro", "model": "gemini-3.1-pro-high"},
-    
+    "DeepSeek-V3":       {"provider": "deepseek", "model": "deepseek-chat"},
+    "DeepSeek-R1":       {"provider": "deepseek", "model": "deepseek-reasoner"},
+
 }
 
 DEFAULT_MODEL = "gemini-3-flash"

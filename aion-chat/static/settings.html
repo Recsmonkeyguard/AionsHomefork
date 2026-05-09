@@ -24,6 +24,10 @@
     <input class="form-input" type="text" id="sfKeyInput" placeholder="输入硅基流动 API Key..." autocomplete="off" style="font-family:monospace">
     <label class="form-label">中转站 API Key</label>
     <input class="form-input" type="text" id="aiproKeyInput" placeholder="输入中转站 API Key..." autocomplete="off" style="font-family:monospace">
+    <label class="form-label">DeepSeek API Key（聊天）</label>
+    <input class="form-input" type="text" id="deepseekKeyInput" placeholder="sk-..." autocomplete="off" style="font-family:monospace">
+    <label class="form-label">DeepSeek Flash Key（哨兵/记忆路由）</label>
+    <input class="form-input" type="text" id="deepseekFlashKeyInput" placeholder="sk-... 留空则复用上方 Key" autocomplete="off" style="font-family:monospace">
     <label class="form-label">网易云 MUSIC_U Cookie（VIP 点歌）</label>
     <input class="form-input" type="text" id="neteaseMusicUInput" placeholder="浏览器 F12 → Cookie → MUSIC_U" autocomplete="off" style="font-family:monospace">
     <div class="btn-row">
@@ -42,6 +46,8 @@ connectCommonWS();
   $("geminiFreeKeyInput").value = s.gemini_free_key || "";
   $("sfKeyInput").value = s.siliconflow_key || "";
   $("aiproKeyInput").value = s.aipro_key || "";
+  $("deepseekKeyInput").value = s.deepseek_key || "";
+  $("deepseekFlashKeyInput").value = s.deepseek_flash_key || "";
   $("neteaseMusicUInput").value = s.netease_music_u || "";
 })();
 
@@ -51,6 +57,8 @@ async function saveSettings() {
     gemini_free_key: $("geminiFreeKeyInput").value.trim(),
     siliconflow_key: $("sfKeyInput").value.trim(),
     aipro_key: $("aiproKeyInput").value.trim(),
+    deepseek_key: $("deepseekKeyInput").value.trim(),
+    deepseek_flash_key: $("deepseekFlashKeyInput").value.trim(),
     netease_music_u: $("neteaseMusicUInput").value.trim()
   });
   showToast("✅ 已保存");
