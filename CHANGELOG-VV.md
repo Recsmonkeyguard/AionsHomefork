@@ -116,3 +116,40 @@
 - [ ] 位置哨兵（location.py:704）仍为 Gemini flash-lite → 未配置 GPS，不急
 - [ ] TTS / ASR 选型（目前绑死硅基流动 CosyVoice2 / SenseVoiceSmall）
 - [ ] 音乐功能恢复（pyncm 替代方案）
+
+---
+
+## 2026-05-10 — 新增 DeepSeek V4 模型
+
+### 涉及文件
+
+| 文件 | 改动 |
+|------|------|
+| `aion-chat/config.py` | `MODELS` 字典新增 `DeepSeek-V4-Flash`（`deepseek-v4-flash`）和 `DeepSeek-V4-Pro`（`deepseek-v4-pro`） |
+
+Provider 复用已有 `call_deepseek()`，无需改 `ai_providers.py`。前端模型选择器自动出现新选项。
+
+---
+
+## 2026-05-10 — 新增固定记忆 + 修复 HEART/MEMORY 正则
+
+### 新增固定记忆功能
+
+在「世界书」中新增固定记忆输入框，内容每轮对话固定注入 Prompt（约 3000 字），适合存放需要 AI 始终记住的关键事实、约定、背景知识。
+
+| 文件 | 改动 |
+|------|------|
+| `aion-chat/config.py` | `load_worldbook()` 默认值加入 `fixed_memory` 字段 |
+| `aion-chat/routes/settings.py` | `WorldBookUpdate` 模型新增 `fixed_memory`；`update_worldbook` 保存该字段 |
+| `aion-chat/routes/chat.py` | `send_message()` 和 `edit_resend_message()` 在 prefix 中注入固定记忆块（系统提示之后、系统能力之前，缓存友好区） |
+| `aion-chat/static/worldbook.html` | 新增「固定记忆」textarea + JS 读写 |
+
+**注入格式**：`[系统设定 - 固定记忆]` 伪装的 user 消息 + assistant 确认应答，与其他人设块保持一致。
+
+### 修复 HEART/MEMORY 正则兼容性
+
+| 文件 | 改动 |
+|------|------|
+| `aion-chat/routes/chat.py` | `HEART_CMD_PATTERN` 和 `MEMORY_CMD_PATTERN` 从仅匹配方括号 `[HEART:xxx]` 改为同时兼容尖括号 `<HEART:xxx>` |
+
+**问题**：AI 偶发输出 `<HEART:xxx>`（尖括号），原正则只能匹配方括号，导致心语内容暴露在聊天中且未入库。修复后两种格式均正确识别、清洗、入库。

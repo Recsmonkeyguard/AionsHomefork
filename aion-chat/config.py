@@ -72,7 +72,7 @@ def load_worldbook():
             return json.loads(WORLDBOOK_PATH.read_text(encoding='utf-8'))
         except:
             pass
-    return {"ai_persona": "", "user_persona": "", "system_prompt": "", "ai_name": "AI", "user_name": "你"}
+    return {"ai_persona": "", "user_persona": "", "system_prompt": "", "fixed_memory": "", "ai_name": "AI", "user_name": "你"}
 
 def save_worldbook(data: dict):
     WORLDBOOK_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -133,6 +133,8 @@ MODELS = {
     "哈基米3.1pro":     {"provider": "aipro", "model": "gemini-3.1-pro-high"},
     "DeepSeek-V3":       {"provider": "deepseek", "model": "deepseek-chat"},
     "DeepSeek-R1":       {"provider": "deepseek", "model": "deepseek-reasoner"},
+    "DeepSeek-V4-Flash": {"provider": "deepseek", "model": "deepseek-v4-flash"},
+    "DeepSeek-V4-Pro":   {"provider": "deepseek", "model": "deepseek-v4-pro"},
 
 }
 

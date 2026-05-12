@@ -21,8 +21,8 @@ from routes.files import export_conversation
 from routes.music import MUSIC_CMD_PATTERN
 from tts import TTSStreamer
 
-HEART_CMD_PATTERN = re.compile(r'\[HEART:([^\]]+)\]')
-MEMORY_CMD_PATTERN = re.compile(r'\[MEMORY:([^\]]+)\]')
+HEART_CMD_PATTERN = re.compile(r'[\[<]HEART:([^\]>]+)[\]>]')
+MEMORY_CMD_PATTERN = re.compile(r'[\[<]MEMORY:([^\]>]+)[\]>]')
 ACTIVITY_CHECK_PATTERN = re.compile(r'\[查看动态:(\d+)\]')
 SELFIE_CMD_PATTERN = re.compile(r'\[SELFIE:\s*([^\]]+)\]')
 DRAW_CMD_PATTERN = re.compile(r'\[DRAW:\s*([^\]]+)\]')
@@ -504,6 +504,9 @@ async def edit_resend_message(msg_id: str, body: MsgEditResend):
     if wb.get("system_prompt"):
         prefix.append({"role": "user", "content": f"[系统提示]\n{wb['system_prompt']}"})
         prefix.append({"role": "assistant", "content": "收到，我会遵循这些规则。"})
+    if wb.get("fixed_memory", "").strip():
+        prefix.append({"role": "user", "content": f"[系统设定 - 固定记忆] 以下是需要你始终记住的、关于{wb.get('user_name', '用户')}和你们关系的重要信息，可以在相关的对话中自然使用：\n{wb['fixed_memory']}"})
+        prefix.append({"role": "assistant", "content": "收到，这些我都记得，会在对话中自然运用。"})
     if prefix:
         history = prefix + history
 
@@ -941,6 +944,9 @@ async def send_message(conv_id: str, body: MsgCreate):
     if wb.get("system_prompt"):
         prefix.append({"role": "user", "content": f"[系统提示]\n{wb['system_prompt']}"})
         prefix.append({"role": "assistant", "content": "收到，我会遵循这些规则。"})
+    if wb.get("fixed_memory", "").strip():
+        prefix.append({"role": "user", "content": f"[系统设定 - 固定记忆] 以下是需要你始终记住的、关于{wb.get('user_name', '用户')}和你们关系的重要信息，可以在相关的对话中自然使用：\n{wb['fixed_memory']}"})
+        prefix.append({"role": "assistant", "content": "收到，这些我都记得，会在对话中自然运用。"})
     if prefix:
         history = prefix + history
 

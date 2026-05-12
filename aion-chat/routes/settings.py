@@ -137,6 +137,7 @@ class WorldBookUpdate(BaseModel):
     ai_persona: str = ""
     user_persona: str = ""
     system_prompt: str = ""
+    fixed_memory: str = ""
     ai_name: str = "AI"
     user_name: str = "你"
 
@@ -147,7 +148,8 @@ async def get_worldbook():
 @router.put("/api/worldbook")
 async def update_worldbook(body: WorldBookUpdate):
     save_worldbook({"ai_persona": body.ai_persona, "user_persona": body.user_persona,
-                    "system_prompt": body.system_prompt, "ai_name": body.ai_name, "user_name": body.user_name})
+                    "system_prompt": body.system_prompt, "fixed_memory": body.fixed_memory,
+                    "ai_name": body.ai_name, "user_name": body.user_name})
     return {"ok": True}
 
 # ── 聊天状态 ──────────────────────────────────────
