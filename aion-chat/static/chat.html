@@ -1821,6 +1821,35 @@ body[data-theme="light"] .plus-menu-item { text-shadow: none; }
 </div>
 
 <script>
+// 认证检测 + 全局 fetch 拦截
+(() => {
+  if (window.location.pathname !== '/login') {
+    const token = localStorage.getItem('aion_token');
+    fetch('/api/models', token ? { headers: { 'Authorization': 'Bearer ' + token } } : undefined)
+      .then(r => { if (r.status === 401) window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname); })
+      .catch(() => {});
+  }
+  const _fetch = window.fetch;
+  window.fetch = function(url, opts = {}) {
+    const token = localStorage.getItem('aion_token');
+    if (token) {
+      opts.headers = opts.headers || {};
+      if (opts.headers instanceof Headers) {
+        if (!opts.headers.has('Authorization')) opts.headers.set('Authorization', 'Bearer ' + token);
+      } else if (!opts.headers['Authorization']) {
+        opts.headers['Authorization'] = 'Bearer ' + token;
+      }
+    }
+    return _fetch(url, opts).then(resp => {
+      if (resp.status === 401) {
+        localStorage.removeItem('aion_token');
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+      }
+      return resp;
+    });
+  };
+})();
+
 let conversations = [];
 let currentConvId = null;
 let currentMessages = [];

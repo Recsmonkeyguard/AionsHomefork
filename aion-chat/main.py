@@ -151,12 +151,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         if any(path == wl or path.startswith(wl) for wl in _AUTH_WHITELIST):
             return await call_next(request)
-        auth = request.headers.get("Authorization", "")
-        if auth == f"Bearer {pwd}":
-            return await call_next(request)
         if path.startswith("/api/"):
+            auth = request.headers.get("Authorization", "")
+            if auth == f"Bearer {pwd}":
+                return await call_next(request)
             return JSONResponse({"error": "unauthorized"}, status_code=401)
-        return RedirectResponse(url=f"/login?next={path}")
+        return await call_next(request)
 
 app.add_middleware(AuthMiddleware)
 

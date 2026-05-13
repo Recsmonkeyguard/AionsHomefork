@@ -25,6 +25,15 @@ const $ = id => document.getElementById(id);
   };
 })();
 
+// 页面加载时自动检测是否需要认证
+(() => {
+  if (window.location.pathname === '/login') return;
+  const token = localStorage.getItem('aion_token');
+  fetch('/api/models', token ? { headers: { 'Authorization': 'Bearer ' + token } } : undefined)
+    .then(r => { if (r.status === 401) window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname); })
+    .catch(() => {});
+})();
+
 // Android APK 中 WebView 是 edge-to-edge，普通功能页需要自己避开系统状态栏。
 // iframe 子页面由 chat.html 的浮层统一处理，避免重复留白。
 if (navigator.userAgent.includes('AionChatApp')) {
