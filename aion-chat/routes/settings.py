@@ -80,6 +80,23 @@ async def update_settings(body: SettingsUpdate):
     save_settings(SETTINGS)
     return {"ok": True}
 
+# ── 数据迁移（一次性） ────────────────────────────
+from fastapi import UploadFile
+from config import DATA_DIR
+
+@router.post("/api/admin/upload-data")
+async def upload_data(file: UploadFile):
+    """将本地数据文件上传到 Railway Volume"""
+    safe_name = file.filename.split("/")[-1]  # 防路径穿越
+    allowed = {"chat.db", "settings.json", "worldbook.json", "digest_anchor.json"}
+    if safe_name not in allowed:
+        return {"error": f"不允许的文件: {safe_name}"}
+    dest = DATA_DIR / safe_name
+    content = await file.read()
+    dest.write_bytes(content)
+    return {"ok": True, "file": safe_name, "size": len(content)}
+# ──────────────────────────────────────────────────
+
 # ── 温度设置 ──────────────────────────────────────
 class TempUpdate(BaseModel):
     temperature: float
