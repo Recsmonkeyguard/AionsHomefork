@@ -276,7 +276,9 @@ async def websocket_endpoint(ws: WebSocket):
 if __name__ == "__main__":
     import uvicorn
     import sys
+    import os
+    port = int(os.environ.get("PORT", 8080))
     if "--reload" in sys.argv:
-        uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
     else:
-        uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=False)
+        uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
