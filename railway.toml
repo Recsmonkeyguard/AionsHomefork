@@ -1,16 +1,15 @@
 # Railway 部署配置 — AionsHome VV 定制版
-# https://docs.railway.com/reference/config-as-code
 
 [build]
 builder = "nixpacks"
+buildCommand = "pip install --quiet ../vendor/pyncm-1.8.1-py3-none-any.whl"
 
 [deploy]
-startCommand = "pip install --quiet ../vendor/pyncm-1.8.1-py3-none-any.whl && python main.py"
+startCommand = "python main.py"
 healthcheckPath = "/"
 restartPolicyType = "always"
 
-# ── 部署后需要在 Railway Dashboard 手动操作 ──
-# 1. 服务 → Settings → Root Directory 设为 aion-chat/
-# 2. 服务 → Settings → Builder → Nixpacks
-# 3. 服务 → Volumes → 添加卷，挂载路径 /app/aion-chat/data/
-#    （这步务必在首次部署前完成，否则数据不持久化）
+# ── 部署前在 Railway Dashboard 设置 ──
+# 1. Root Directory → aion-chat/
+# 2. Volumes → 挂载 /app/aion-chat/data/
+#    （首次部署前完成，否则数据不持久化）

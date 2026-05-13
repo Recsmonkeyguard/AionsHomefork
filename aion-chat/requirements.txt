@@ -7,14 +7,14 @@ Pillow
 sounddevice
 numpy
 webrtcvad-wheels
-pyncm
 pydantic
 python-multipart
 ebooklib
 beautifulsoup4
 lxml
 websockets
-pywin32
 psutil
 akshare
 chinese-calendar
+# pywin32 — Windows 专属，Mac/Linux 不可用，已移除
+# pyncm — 已从 PyPI 下架，通过 vendor/pyncm-*.whl 离线安装
