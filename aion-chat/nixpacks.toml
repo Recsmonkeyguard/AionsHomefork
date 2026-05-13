@@ -2,4 +2,5 @@
 # 安装系统级依赖（PortAudio → sounddevice 需要）
 
 [phases.setup]
-aptPkgs = ["libportaudio2", "portaudio19-dev"]
+nixPkgs = ["...", "portaudio"]
+aptPkgs = ["...", "libportaudio2"]
