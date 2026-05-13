@@ -40,18 +40,32 @@ body {
   <div class="err" id="err">密码错误</div>
 </div>
 <script>
+var _busy = false;
 async function login() {
-  const pwd = document.getElementById('pwd').value.trim();
+  if (_busy) return;
+  const el = document.getElementById('pwd');
+  const pwd = el.value.trim();
   if (!pwd) return;
-  const test = await fetch('/api/models', { headers: { 'Authorization': 'Bearer ' + pwd } });
-  if (test.ok) {
-    localStorage.setItem('aion_token', pwd);
-    const next = new URLSearchParams(window.location.search).get('next') || '/';
-    window.location.href = next;
-  } else {
+  _busy = true;
+  try {
+    const test = await fetch('/api/models', { headers: { 'Authorization': 'Bearer ' + pwd } });
+    if (test.ok) {
+      localStorage.setItem('aion_token', pwd);
+      const next = new URLSearchParams(window.location.search).get('next') || '/';
+      window.location.href = next;
+    } else {
+      document.getElementById('err').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('err').textContent = '网络错误: ' + e.message;
     document.getElementById('err').style.display = 'block';
   }
+  _busy = false;
+  el.value = '';
 }
+document.getElementById('pwd').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') login();
+});
 </script>
 </body>
 </html>
