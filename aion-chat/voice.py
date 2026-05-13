@@ -9,9 +9,15 @@
 
 import io, wave, time, threading, asyncio, re
 import numpy as np
-import sounddevice as sd
 import httpx
 import webrtcvad
+
+try:
+    import sounddevice as sd
+    _has_sounddevice = True
+except OSError:
+    sd = None
+    _has_sounddevice = False
 
 _EMOJI_RE = re.compile(
     "[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF"
@@ -68,6 +74,9 @@ class VoiceWakeup:
 
     def start(self, wake_word: str = "老公"):
         """开启语音监听"""
+        if not _has_sounddevice:
+            print("[Voice] PortAudio 未安装，语音功能不可用")
+            return
         if self._thread and self._thread.is_alive():
             return
         self.wake_word = wake_word
