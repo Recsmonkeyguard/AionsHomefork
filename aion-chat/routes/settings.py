@@ -83,6 +83,19 @@ async def update_settings(body: SettingsUpdate):
 # ── 数据迁移（一次性） ────────────────────────────
 from fastapi import UploadFile
 from config import DATA_DIR
+import os
+
+@router.get("/api/admin/diag")
+async def diag():
+    """诊断：Volume 挂载状态"""
+    data_path = str(DATA_DIR)
+    return {
+        "data_dir": data_path,
+        "exists": os.path.isdir(data_path),
+        "files": os.listdir(data_path) if os.path.isdir(data_path) else [],
+        "railway_volume_name": os.environ.get("RAILWAY_VOLUME_NAME", "NOT SET"),
+        "railway_volume_mount_path": os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", "NOT SET"),
+    }
 
 @router.post("/api/admin/upload-data")
 async def upload_data(file: UploadFile):
