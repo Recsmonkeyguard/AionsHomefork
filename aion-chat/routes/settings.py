@@ -11,7 +11,7 @@ from typing import Optional
 
 import httpx
 
-from config import SETTINGS, MODELS, save_settings, get_key, load_worldbook, save_worldbook, load_chat_status, TTS_CACHE_DIR
+from config import SETTINGS, MODELS, save_settings, get_key, load_worldbook, save_worldbook, load_chat_status, TTS_CACHE_DIR, DATA_DIR
 
 router = APIRouter()
 
@@ -29,6 +29,7 @@ class SettingsUpdate(BaseModel):
     deepseek_key: Optional[str] = None
     deepseek_flash_key: Optional[str] = None
     netease_music_u: Optional[str] = None
+    access_password: Optional[str] = None
 
 @router.get("/api/settings")
 async def get_settings():
@@ -44,6 +45,7 @@ async def get_settings():
         "deepseek_key": SETTINGS.get("deepseek_key", ""),
         "deepseek_flash_key": SETTINGS.get("deepseek_flash_key", ""),
         "netease_music_u": SETTINGS.get("netease_music_u", ""),
+        "access_password": SETTINGS.get("access_password", ""),
         "gemini_key_masked": mask(SETTINGS.get("gemini_key", "")),
         "siliconflow_key_masked": mask(SETTINGS.get("siliconflow_key", "")),
         "gemini_free_key_masked": mask(SETTINGS.get("gemini_free_key", "")),
@@ -67,6 +69,8 @@ async def update_settings(body: SettingsUpdate):
         SETTINGS["deepseek_key"] = body.deepseek_key
     if body.deepseek_flash_key is not None:
         SETTINGS["deepseek_flash_key"] = body.deepseek_flash_key
+    if body.access_password is not None:
+        SETTINGS["access_password"] = body.access_password
     if body.netease_music_u is not None:
         old_mu = SETTINGS.get("netease_music_u", "")
         SETTINGS["netease_music_u"] = body.netease_music_u
@@ -79,36 +83,6 @@ async def update_settings(body: SettingsUpdate):
                 pass
     save_settings(SETTINGS)
     return {"ok": True}
-
-# ── 数据迁移（一次性） ────────────────────────────
-from fastapi import UploadFile
-from config import DATA_DIR
-import os
-
-@router.get("/api/admin/diag")
-async def diag():
-    """诊断：Volume 挂载状态"""
-    data_path = str(DATA_DIR)
-    return {
-        "data_dir": data_path,
-        "exists": os.path.isdir(data_path),
-        "files": os.listdir(data_path) if os.path.isdir(data_path) else [],
-        "railway_volume_name": os.environ.get("RAILWAY_VOLUME_NAME", "NOT SET"),
-        "railway_volume_mount_path": os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", "NOT SET"),
-    }
-
-@router.post("/api/admin/upload-data")
-async def upload_data(file: UploadFile):
-    """将本地数据文件上传到 Railway Volume"""
-    safe_name = file.filename.split("/")[-1]  # 防路径穿越
-    allowed = {"chat.db", "settings.json", "worldbook.json", "digest_anchor.json"}
-    if safe_name not in allowed:
-        return {"error": f"不允许的文件: {safe_name}"}
-    dest = DATA_DIR / safe_name
-    content = await file.read()
-    dest.write_bytes(content)
-    return {"ok": True, "file": safe_name, "size": len(content)}
-# ──────────────────────────────────────────────────
 
 # ── 温度设置 ──────────────────────────────────────
 class TempUpdate(BaseModel):

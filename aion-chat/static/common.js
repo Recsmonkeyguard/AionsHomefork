@@ -2,6 +2,29 @@
 
 const $ = id => document.getElementById(id);
 
+// 全局 fetch 拦截：所有请求自动带访问密码
+(() => {
+  const _fetch = window.fetch;
+  window.fetch = function(url, opts = {}) {
+    const token = localStorage.getItem('aion_token');
+    if (token) {
+      opts.headers = opts.headers || {};
+      if (opts.headers instanceof Headers) {
+        if (!opts.headers.has('Authorization')) opts.headers.set('Authorization', 'Bearer ' + token);
+      } else if (!opts.headers['Authorization']) {
+        opts.headers['Authorization'] = 'Bearer ' + token;
+      }
+    }
+    return _fetch(url, opts).then(resp => {
+      if (resp.status === 401) {
+        localStorage.removeItem('aion_token');
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+      }
+      return resp;
+    });
+  };
+})();
+
 // Android APK 中 WebView 是 edge-to-edge，普通功能页需要自己避开系统状态栏。
 // iframe 子页面由 chat.html 的浮层统一处理，避免重复留白。
 if (navigator.userAgent.includes('AionChatApp')) {
@@ -75,9 +98,17 @@ if (window.parent !== window) {
 }
 
 async function api(method, url, body) {
-  const opts = { method, headers: {"Content-Type": "application/json"} };
+  const headers = {"Content-Type": "application/json"};
+  const token = localStorage.getItem('aion_token');
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(url, opts);
+  if (res.status === 401) {
+    localStorage.removeItem('aion_token');
+    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+    return Promise.reject('unauthorized');
+  }
   return res.json();
 }
 
@@ -109,7 +140,9 @@ let _wsHandlers = {};
 
 function connectCommonWS(extraHandler) {
   const proto = location.protocol === "https:" ? "wss:" : "ws:";
-  _commonWs = new WebSocket(`${proto}//${location.host}/ws`);
+  const token = localStorage.getItem('aion_token');
+  const wsToken = token ? `?token=${encodeURIComponent(token)}` : '';
+  _commonWs = new WebSocket(`${proto}//${location.host}/ws${wsToken}`);
   _commonWs.onmessage = e => {
     const msg = JSON.parse(e.data);
     // 闹铃弹窗 — 全局

@@ -30,6 +30,8 @@
     <input class="form-input" type="text" id="deepseekFlashKeyInput" placeholder="sk-... 留空则复用上方 Key" autocomplete="off" style="font-family:monospace">
     <label class="form-label">网易云 MUSIC_U Cookie（VIP 点歌）</label>
     <input class="form-input" type="text" id="neteaseMusicUInput" placeholder="浏览器 F12 → Cookie → MUSIC_U" autocomplete="off" style="font-family:monospace">
+    <label class="form-label">🔒 访问密码（留空 = 不设密码）</label>
+    <input class="form-input" type="password" id="passwordInput" placeholder="设置密码后，所有访问都需验证..." autocomplete="off">
     <div class="btn-row">
       <button class="btn-cancel" onclick="location.href='/'">取消</button>
       <button class="btn-save" onclick="saveSettings()">保存</button>
@@ -49,6 +51,7 @@ connectCommonWS();
   $("deepseekKeyInput").value = s.deepseek_key || "";
   $("deepseekFlashKeyInput").value = s.deepseek_flash_key || "";
   $("neteaseMusicUInput").value = s.netease_music_u || "";
+  $("passwordInput").value = s.access_password || "";
 })();
 
 async function saveSettings() {
@@ -59,8 +62,12 @@ async function saveSettings() {
     aipro_key: $("aiproKeyInput").value.trim(),
     deepseek_key: $("deepseekKeyInput").value.trim(),
     deepseek_flash_key: $("deepseekFlashKeyInput").value.trim(),
-    netease_music_u: $("neteaseMusicUInput").value.trim()
+    netease_music_u: $("neteaseMusicUInput").value.trim(),
+    access_password: $("passwordInput").value.trim()
   });
+  const newPwd = $("passwordInput").value.trim();
+  if (newPwd) localStorage.setItem('aion_token', newPwd);
+  else localStorage.removeItem('aion_token');
   showToast("✅ 已保存");
 }
 </script>

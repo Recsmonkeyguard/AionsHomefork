@@ -137,6 +137,29 @@ class NoCacheStaticMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(NoCacheStaticMiddleware)
 
+# 访问密码中间件
+from starlette.responses import RedirectResponse, JSONResponse
+
+_AUTH_WHITELIST = ("/login", "/static/", "/public/", "/uploads/", "/screenshots/", "/manifest.json", "/sw.js", "/ws", "/favicon.ico")
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        from config import SETTINGS
+        pwd = SETTINGS.get("access_password", "").strip()
+        if not pwd:
+            return await call_next(request)
+        path = request.url.path
+        if any(path == wl or path.startswith(wl) for wl in _AUTH_WHITELIST):
+            return await call_next(request)
+        auth = request.headers.get("Authorization", "")
+        if auth == f"Bearer {pwd}":
+            return await call_next(request)
+        if path.startswith("/api/"):
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+        return RedirectResponse(url=f"/login?next={path}")
+
+app.add_middleware(AuthMiddleware)
+
 # 静态文件
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
@@ -163,6 +186,10 @@ app.include_router(wallpaper_routes.router)
 
 
 # 页面
+@app.get("/login")
+async def login_page():
+    return FileResponse(BASE_DIR / "static" / "login.html", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
 @app.get("/")
 async def home():
     return FileResponse(BASE_DIR / "static" / "home.html", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
@@ -247,6 +274,13 @@ async def manifest():
 # WebSocket
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
+    from config import SETTINGS
+    pwd = SETTINGS.get("access_password", "").strip()
+    if pwd:
+        token = ws.query_params.get("token", "")
+        if token != pwd:
+            await ws.close(code=4001, reason="unauthorized")
+            return
     await manager.connect(ws)
     try:
         while True:
