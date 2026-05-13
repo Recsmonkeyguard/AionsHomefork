@@ -2,7 +2,7 @@ fastapi
 uvicorn
 httpx
 aiosqlite
-opencv-python
+opencv-python-headless
 Pillow
 sounddevice
 numpy
