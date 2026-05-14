@@ -486,7 +486,7 @@ async def edit_resend_message(msg_id: str, body: MsgEditResend):
             except: d["attachments"] = []
             d["content"] = META_TAG_PATTERN.sub("", d["content"]).strip()
             if d.get("created_at"):
-                dt = datetime.fromtimestamp(d["created_at"])
+                dt = datetime.fromtimestamp(d["created_at"], BEIJING_TZ)
                 d["content"] = f"{d['content']}\n<meta>发送时间：{dt.month}月{dt.day}日 {dt.strftime('%H:%M')}</meta>"
             history.append(d)
 
@@ -923,7 +923,7 @@ async def send_message(conv_id: str, body: MsgCreate):
             # 清洗消息中可能已有的 <meta> 标签（AI 模仿产生的），再附加系统时间戳
             d["content"] = META_TAG_PATTERN.sub("", d["content"]).strip()
             if d.get("created_at"):
-                dt = datetime.fromtimestamp(d["created_at"])
+                dt = datetime.fromtimestamp(d["created_at"], BEIJING_TZ)
                 d["content"] = f"{d['content']}\n<meta>发送时间：{dt.month}月{dt.day}日 {dt.strftime('%H:%M')}</meta>"
             history.append(d)
 
@@ -1869,7 +1869,7 @@ async def regenerate_message(conv_id: str, context_limit: int = 30, whisper_mode
             # 清洗消息中可能已有的 <meta> 标签（AI 模仿产生的），再附加系统时间戳
             d["content"] = META_TAG_PATTERN.sub("", d["content"]).strip()
             if d.get("created_at"):
-                dt = datetime.fromtimestamp(d["created_at"])
+                dt = datetime.fromtimestamp(d["created_at"], BEIJING_TZ)
                 d["content"] = f"{d['content']}\n<meta>发送时间：{dt.month}月{dt.day}日 {dt.strftime('%H:%M')}</meta>"
             history.append(d)
 
