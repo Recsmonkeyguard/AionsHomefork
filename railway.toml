@@ -2,7 +2,7 @@
 
 [build]
 builder = "nixpacks"
-buildCommand = "cp -r ../public ./public && pip install --quiet ./pyncm-1.8.1-py3-none-any.whl"
+buildCommand = "pip install --quiet ./pyncm-1.8.1-py3-none-any.whl"
 
 [deploy]
 startCommand = "python main.py"
