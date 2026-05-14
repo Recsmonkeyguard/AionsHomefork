@@ -7,7 +7,8 @@ from pathlib import Path
 
 # ── 路径 ─────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
-PUBLIC_DIR = BASE_DIR.parent / "public"
+_local_public = BASE_DIR / "public"
+PUBLIC_DIR = _local_public if _local_public.exists() else BASE_DIR.parent / "public"
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 DB_PATH = DATA_DIR / "chat.db"
