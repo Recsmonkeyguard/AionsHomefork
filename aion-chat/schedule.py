@@ -7,6 +7,8 @@
 
 import asyncio, json, time, threading, logging, re
 from datetime import datetime
+from zoneinfo import ZoneInfo
+BEIJING_TZ = ZoneInfo("Asia/Shanghai")
 
 import aiosqlite
 
@@ -182,7 +184,7 @@ class ScheduleManager:
             prefix.append({"role": "assistant", "content": "收到，我会记住你的信息。"})
 
         # 拼接当前时间（与正常发消息一致）
-        now_str = datetime.now().strftime("%Y年%m月%d日  %H:%M:%S")
+        now_str = datetime.now(BEIJING_TZ).strftime("%Y年%m月%d日  %H:%M:%S")
         if prefix:
             prefix[-1]["content"] += f"\n系统当前的准确时间是 {now_str}"
 
@@ -384,7 +386,7 @@ class ScheduleManager:
             prefix.append({"role": "user", "content": f"[系统设定 - 用户信息]\n{wb['user_persona']}"})
             prefix.append({"role": "assistant", "content": "收到，我会记住你的信息。"})
 
-        now_str = datetime.now().strftime("%Y年%m月%d日  %H:%M:%S")
+        now_str = datetime.now(BEIJING_TZ).strftime("%Y年%m月%d日  %H:%M:%S")
         if prefix:
             prefix[-1]["content"] += f"\n系统当前的准确时间是 {now_str}"
 

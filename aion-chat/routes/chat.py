@@ -4,6 +4,8 @@
 
 import json, time, asyncio, re
 from datetime import datetime
+from zoneinfo import ZoneInfo
+BEIJING_TZ = ZoneInfo("Asia/Shanghai")
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
@@ -593,7 +595,7 @@ async def edit_resend_message(msg_id: str, body: MsgEditResend):
         _do_surfacing(), _do_recall()
     )
 
-    now_str = datetime.now().strftime("%Y年%m月%d日  %H:%M:%S")
+    now_str = datetime.now(BEIJING_TZ).strftime("%Y年%m月%d日  %H:%M:%S")
     bg_block = f"系统当前的准确时间是 {now_str}"
     if surfaced:
         unresolved_lines = [f"📌 {m['content']}（还没做/还没去）" for m in surfaced if m.get("unresolved")]
@@ -1063,7 +1065,7 @@ async def send_message(conv_id: str, body: MsgCreate):
 
     if body.fast_mode:
         # ── 快速模式：仅注入当前时间，跳过哨兵和记忆 ──
-        now_str = datetime.now().strftime("%Y年%m月%d日  %H:%M:%S")
+        now_str = datetime.now(BEIJING_TZ).strftime("%Y年%m月%d日  %H:%M:%S")
         bg_block = f"系统当前的准确时间是 {now_str}"
         history.insert(cap_idx + inject_offset, {"role": "user", "content": bg_block})
         history.insert(cap_idx + inject_offset + 1, {"role": "assistant", "content": "收到。"})
@@ -1093,7 +1095,7 @@ async def send_message(conv_id: str, body: MsgCreate):
         )
 
         # 注入当前时间（缓存分界点）+ 背景记忆（动态内容）
-        now_str = datetime.now().strftime("%Y年%m月%d日  %H:%M:%S")
+        now_str = datetime.now(BEIJING_TZ).strftime("%Y年%m月%d日  %H:%M:%S")
         bg_block = f"系统当前的准确时间是 {now_str}"
         if surfaced:
             unresolved_lines = [f"📌 {m['content']}（还没做/还没去）" for m in surfaced if m.get("unresolved")]
@@ -1964,7 +1966,7 @@ async def regenerate_message(conv_id: str, context_limit: int = 30, whisper_mode
 
     if fast_mode:
         # ── 快速模式：仅注入当前时间 ──
-        now_str = datetime.now().strftime("%Y年%m月%d日  %H:%M:%S")
+        now_str = datetime.now(BEIJING_TZ).strftime("%Y年%m月%d日  %H:%M:%S")
         bg_block = f"系统当前的准确时间是 {now_str}"
         history.insert(cap_idx + inject_offset, {"role": "user", "content": bg_block})
         history.insert(cap_idx + inject_offset + 1, {"role": "assistant", "content": "收到。"})
@@ -1979,7 +1981,7 @@ async def regenerate_message(conv_id: str, context_limit: int = 30, whisper_mode
 
         # 3. 注入当前时间（缓存分界点）+ 背景记忆（动态内容）
         surfaced, surfaced_ids = await build_surfacing_memories(topic, recall_keywords)
-        now_str = datetime.now().strftime("%Y年%m月%d日  %H:%M:%S")
+        now_str = datetime.now(BEIJING_TZ).strftime("%Y年%m月%d日  %H:%M:%S")
         bg_block = f"系统当前的准确时间是 {now_str}"
         if surfaced:
             unresolved_lines = [f"📌 {m['content']}（还没做/还没去）" for m in surfaced if m.get("unresolved")]
