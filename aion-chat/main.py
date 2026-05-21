@@ -20,7 +20,7 @@ logging.getLogger("uvicorn.access").addFilter(_QuietCamFilter())
 
 # 静默 Windows asyncio ProactorEventLoop 连接重置的噪音日志
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
 from config import BASE_DIR, PUBLIC_DIR, UPLOADS_DIR, SCREENSHOTS_DIR, load_cam_config
 from database import init_db, get_db
@@ -140,7 +140,7 @@ app.add_middleware(NoCacheStaticMiddleware)
 # 访问密码中间件
 from starlette.responses import RedirectResponse, JSONResponse
 
-_AUTH_WHITELIST = ("/login", "/static/", "/public/", "/uploads/", "/screenshots/", "/manifest.json", "/sw.js", "/ws", "/favicon.ico")
+_AUTH_WHITELIST = ("/login", "/static/", "/public/", "/uploads/", "/screenshots/", "/manifest.json", "/sw.js", "/ws", "/favicon.ico", "/api/admin/download-data")
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -303,6 +303,33 @@ async def websocket_endpoint(ws: WebSocket):
         logging.getLogger("ws").warning("WS endpoint error: %s", e)
     finally:
         manager.disconnect(ws)
+
+
+# ── 临时：数据迁移下载接口（用完即删） ──
+@app.get("/api/admin/download-data")
+async def download_data(token: str = ""):
+    if token != "rec-migrate-2026":
+        return JSONResponse({"error": "invalid token"}, status_code=403)
+    import subprocess
+    data_dir = BASE_DIR / "data"
+    if not data_dir.exists():
+        return JSONResponse({"error": "data dir not found"}, status_code=404)
+    def iter_tar():
+        proc = subprocess.Popen(
+            ["tar", "-czf", "-", "-C", str(data_dir.parent), "data"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        while True:
+            chunk = proc.stdout.read(8192)
+            if not chunk:
+                break
+            yield chunk
+        proc.stdout.close()
+    return StreamingResponse(
+        iter_tar(),
+        media_type="application/gzip",
+        headers={"Content-Disposition": "attachment; filename=data-backup.tar.gz"},
+    )
 
 
 if __name__ == "__main__":
